@@ -36,3 +36,7 @@ body {
   -webkit-text-fill-color: transparent;
   padding-top: 100px;
 }
+
+.text-muted {
+  color: #999999 !important;
+}
