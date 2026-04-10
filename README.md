@@ -18,3 +18,5 @@ For a step-by-step guide, see [this tutorial](https://alphasec.io/how-to-deploy-
 ### ☁️ Deploy on DigitalOcean
 
 Although this repo is optimized for Railway, the same setup can be deployed to [DigitalOcean](https://m.do.co/c/5552e11c260f) using App Platform or a custom droplet. Follow [this guide](https://alphasec.io/how-to-deploy-a-static-website-with-caddy-on-digitalocean/) for detailed instructions.
+
+trigger test
