@@ -1,22 +1,22 @@
 steps:
   # Build Docker image
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/$PROJECT_ID/caddy-app', '.']
+    args: [
+      'build',
+      '-t',
+      'asia-south1-docker.pkg.dev/$PROJECT_ID/caddy-repo/caddy-app:latest',
+      '.'
+    ]
 
-  # Push image
+  # Push image to Artifact Registry
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/$PROJECT_ID/caddy-app']
+    args: [
+      'push',
+      'asia-south1-docker.pkg.dev/$PROJECT_ID/caddy-repo/caddy-app:latest'
+    ]
 
-  # Deploy to Cloud Run
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    entrypoint: gcloud
-    args:
-      [
-        'run', 'deploy', 'caddy-service',
-        '--image', 'gcr.io/$PROJECT_ID/caddy-app',
-        '--region', 'us-central1',
-        '--platform', 'managed',
-        '--allow-unauthenticated'
-      ]
+images:
+  - 'asia-south1-docker.pkg.dev/$PROJECT_ID/caddy-repo/caddy-app:latest'
+
 options:
   logging: CLOUD_LOGGING_ONLY
