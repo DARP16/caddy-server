@@ -12,12 +12,12 @@ steps:
 - name: 'gcr.io/cloud-builders/docker'
   args: ['tag', 'caddy', 'asia-south1-docker.pkg.dev/$PROJECT_ID/caddy-repo/caddy-app:latest']
 
-- name: 'anchore/grype'
-  entrypoint: 'sh'
+- name: 'gcr.io/cloud-builders/docker'
+  entrypoint: 'bash'
   args:
     - '-c'
     - |
-      grype caddy -o csv > result-$BUILD_ID.csv
+      docker run --rm anchore/grype caddy -o csv > result-$BUILD_ID.csv
 
 # Push image
 - name: 'gcr.io/cloud-builders/docker'
