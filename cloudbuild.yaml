@@ -1,39 +1,35 @@
 steps:
-  # Build Docker image
-  - name: 'gcr.io/cloud-builders/docker'
-    args: [
-      'build',
-      '-t',
-      'asia-south1-docker.pkg.dev/$PROJECT_ID/caddy-repo/caddy-app:latest',
-      '.'
-    ]
 
-  # Push image to Artifact Registry
-  - name: 'gcr.io/cloud-builders/docker'
-    args: [
-      'push',
-      'asia-south1-docker.pkg.dev/$PROJECT_ID/caddy-repo/caddy-app:latest'
-    ]
+# Pull image
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['pull', 'caddy']
 
-  - name: 'ubuntu'
-    entrypoint: 'bash'
-    args:
-      - '-c'
-      - |
-        apt-get update
-        apt-get install -y curl
+# Authenticate
+- name: 'gcr.io/cloud-builders/gcloud'
+  args: ['auth', 'configure-docker', 'asia-south1-docker.pkg.dev']
 
-        curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh
-        mv ./bin/grype /usr/local/bin/
+# Tag image
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['tag','caddy','asia-south1-docker.pkg.dev/$PROJECT_ID/caddy-repo/caddy-app:latest']
 
-        grype asia-south1-docker.pkg.dev/$PROJECT_ID/caddy-repo/caddy-app:latest -o json > result.json
+- name: 'ubuntu'
+  entrypoint: 'bash'
+  args:
+    - '-c'
+    - |
+      apt-get update
+      apt-get install -y curl
 
-  # Upload result
-  - name: 'gcr.io/cloud-builders/gsutil'
-    args: ['cp','result.json','gs://darp-grype-bucket-123/']
+      curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh
+      mv ./bin/grype /usr/local/bin/
 
-images:
-  - 'asia-south1-docker.pkg.dev/$PROJECT_ID/caddy-repo/caddy-app:latest'
+      # Scan LOCAL image (important)
+      grype caddy -o json > result.json
 
-options:
-  logging: CLOUD_LOGGING_ONLY
+# Push image
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push','asia-south1-docker.pkg.dev/$PROJECT_ID/caddy-repo/caddy-app:latest']
+
+# Upload result
+- name: 'gcr.io/cloud-builders/gsutil'
+  args: ['cp','result.json','gs://darp-grype-bucket-123/']
