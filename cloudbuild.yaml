@@ -12,15 +12,18 @@ steps:
 - name: 'gcr.io/cloud-builders/docker'
   args: ['tag', 'caddy', 'asia-south1-docker.pkg.dev/$PROJECT_ID/caddy-repo/caddy-app:latest']
 
-# 🔥 FASTEST Grype scan (NO TAR, NO INSTALL)
-- name: 'anchore/grype'
-  entrypoint: 'sh'
+# 🔥 Scan BEFORE push (FAST & CORRECT)
+- name: 'gcr.io/cloud-builders/docker'
+  entrypoint: 'bash'
   args:
     - '-c'
     - |
-      grype caddy -o table > result-$BUILD_ID.txt
+      docker run --rm \
+        -v /var/run/docker.sock:/var/run/docker.sock \
+        anchore/grype:latest \
+        caddy -o table > result-$BUILD_ID.txt
 
-# Push image
+# Push image (ONLY if scan done)
 - name: 'gcr.io/cloud-builders/docker'
   args: ['push', 'asia-south1-docker.pkg.dev/$PROJECT_ID/caddy-repo/caddy-app:latest']
 
