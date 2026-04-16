@@ -12,20 +12,12 @@ steps:
 - name: 'gcr.io/cloud-builders/docker'
   args: ['tag', 'caddy', 'asia-south1-docker.pkg.dev/$PROJECT_ID/caddy-repo/caddy-app:latest']
 
-# Grype scan
-- name: 'ubuntu'
-  entrypoint: 'bash'
+- name: 'anchore/grype'
+  entrypoint: 'sh'
   args:
     - '-c'
     - |
-      apt-get update
-      apt-get install -y curl
-
-      curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh
-      mv ./bin/grype /usr/local/bin/
-
-      # Scan LOCAL image
-      grype caddy -o json > result-$BUILD_ID.json
+      grype caddy -o csv > result-$BUILD_ID.csv
 
 # Push image
 - name: 'gcr.io/cloud-builders/docker'
@@ -33,8 +25,7 @@ steps:
 
 # Upload result
 - name: 'gcr.io/cloud-builders/gsutil'
-  args: ['cp', 'result-$BUILD_ID.json', 'gs://darp-grype-bucket-123/']
+  args: ['cp', 'result-$BUILD_ID.csv', 'gs://darp-grype-bucket-123/']
 
-# Fix logging error
 options:
   logging: CLOUD_LOGGING_ONLY
