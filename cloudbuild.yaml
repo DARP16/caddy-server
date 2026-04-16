@@ -12,19 +12,20 @@ steps:
 - name: 'gcr.io/cloud-builders/docker'
   args: ['tag', 'caddy', 'asia-south1-docker.pkg.dev/$PROJECT_ID/caddy-repo/caddy-app:latest']
 
+# Convert image → tar
 - name: 'gcr.io/cloud-builders/docker'
   args: ['save', 'caddy', '-o', 'image.tar']
 
 - name: 'anchore/grype'
-  args: ['/workspace/image.tar', '-o', 'csv']
+  args: ['/workspace/image.tar', '-o', 'json']
 
-# Save output manually
-- name: 'gcr.io/cloud-builders/docker'
+- name: 'gcr.io/cloud-builders/gcloud'
   entrypoint: 'bash'
   args:
     - '-c'
     - |
-      docker run --rm -v $(pwd):/workspace anchore/grype /workspace/image.tar -o csv > result-$BUILD_ID.csv
+      apt-get update && apt-get install -y jq
+      jq -r '.matches[] | [.artifact.name, .artifact.version, .vulnerability.id, .vulnerability.severity] | @csv' /workspace/grype.json > result-$BUILD_ID.csv
 
 # Push image
 - name: 'gcr.io/cloud-builders/docker'
