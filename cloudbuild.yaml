@@ -12,32 +12,21 @@ steps:
 - name: 'gcr.io/cloud-builders/docker'
   args: ['tag', 'caddy', 'asia-south1-docker.pkg.dev/$PROJECT_ID/caddy-repo/caddy-app:latest']
 
-# Convert image → tar (required for Grype)
-- name: 'gcr.io/cloud-builders/docker'
-  args: ['save', 'caddy', '-o', 'image.tar']
-
-# 🔥 Grype scan (JSON output)
+# 🔥 FASTEST Grype scan (NO TAR, NO INSTALL)
 - name: 'anchore/grype'
-  args: ['/workspace/image.tar', '-o', 'json', '--file', 'grype.json']
-
-# 🔥 Convert JSON → CSV
-- name: 'gcr.io/cloud-builders/gcloud'
-  entrypoint: 'bash'
+  entrypoint: 'sh'
   args:
     - '-c'
     - |
-      apt-get update
-      apt-get install -y jq
+      grype caddy -o table > result-$BUILD_ID.txt
 
-      jq -r '.matches[] | [.artifact.name, .artifact.version, .vulnerability.id, .vulnerability.severity] | @csv' grype.json > result-$BUILD_ID.csv
-
-# Push image (AFTER scan ✅)
+# Push image
 - name: 'gcr.io/cloud-builders/docker'
   args: ['push', 'asia-south1-docker.pkg.dev/$PROJECT_ID/caddy-repo/caddy-app:latest']
 
-# Upload CSV to bucket
+# Upload result
 - name: 'gcr.io/cloud-builders/gsutil'
-  args: ['cp', 'result-$BUILD_ID.csv', 'gs://darp-grype-bucket-123/']
+  args: ['cp', 'result-$BUILD_ID.txt', 'gs://darp-grype-bucket-123/']
 
 options:
   logging: CLOUD_LOGGING_ONLY
