@@ -13,11 +13,18 @@ steps:
   args: ['tag', 'caddy', 'asia-south1-docker.pkg.dev/$PROJECT_ID/caddy-repo/caddy-app:latest']
 
 - name: 'gcr.io/cloud-builders/docker'
+  args: ['save', 'caddy', '-o', 'image.tar']
+
+- name: 'anchore/grype'
+  args: ['/workspace/image.tar', '-o', 'csv']
+
+# Save output manually
+- name: 'gcr.io/cloud-builders/docker'
   entrypoint: 'bash'
   args:
     - '-c'
     - |
-      docker run --rm anchore/grype caddy -o csv > result-$BUILD_ID.csv
+      docker run --rm -v $(pwd):/workspace anchore/grype /workspace/image.tar -o csv > result-$BUILD_ID.csv
 
 # Push image
 - name: 'gcr.io/cloud-builders/docker'
