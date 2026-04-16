@@ -4,7 +4,7 @@ steps:
 - name: 'gcr.io/cloud-builders/docker'
   args: ['pull', 'caddy']
 
-# Authenticate
+# Authenticate Docker with Artifact Registry
 - name: 'gcr.io/cloud-builders/gcloud'
   args: ['auth', 'configure-docker', 'asia-south1-docker.pkg.dev']
 
@@ -12,7 +12,6 @@ steps:
 - name: 'gcr.io/cloud-builders/docker'
   args: ['tag','caddy','asia-south1-docker.pkg.dev/$PROJECT_ID/caddy-repo/caddy-app:latest']
 
-# Grype scan BEFORE push
 - name: 'ubuntu'
   entrypoint: 'bash'
   args:
@@ -30,6 +29,10 @@ steps:
 - name: 'gcr.io/cloud-builders/docker'
   args: ['push','asia-south1-docker.pkg.dev/$PROJECT_ID/caddy-repo/caddy-app:latest']
 
-# Upload result
+# Upload scan result to bucket
 - name: 'gcr.io/cloud-builders/gsutil'
   args: ['cp','result-$BUILD_ID.json','gs://darp-grype-bucket-123/']
+
+# ✅ FIX FOR YOUR ERROR
+options:
+  logging: CLOUD_LOGGING_ONLY
