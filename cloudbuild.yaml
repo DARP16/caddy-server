@@ -1,18 +1,18 @@
 steps:
 
-# Pull image
+# 🔨 Build Docker image from your repo (GitHub code)
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['pull', 'caddy']
+  args: ['build', '-t', 'caddy-app', '.']
 
-# Authenticate
+# 🔐 Authenticate Docker with Artifact Registry
 - name: 'gcr.io/cloud-builders/gcloud'
   args: ['auth', 'configure-docker', 'asia-south1-docker.pkg.dev']
 
-# Tag image
+# 🏷️ Tag image for Artifact Registry
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['tag', 'caddy', 'asia-south1-docker.pkg.dev/$PROJECT_ID/caddy-repo/caddy-app:latest']
+  args: ['tag', 'caddy-app', 'asia-south1-docker.pkg.dev/$PROJECT_ID/caddy-repo/caddy-app:latest']
 
-# 🔥 Scan BEFORE push (FAST & CORRECT)
+# 🔥 Scan BEFORE push (correct DevSecOps way)
 - name: 'gcr.io/cloud-builders/docker'
   entrypoint: 'bash'
   args:
@@ -21,13 +21,13 @@ steps:
       docker run --rm \
         -v /var/run/docker.sock:/var/run/docker.sock \
         anchore/grype:latest \
-        caddy -o table > result-$BUILD_ID.txt
+        caddy-app -o table > result-$BUILD_ID.txt
 
-# Push image (ONLY if scan done)
+# 🚀 Push image (only after scan)
 - name: 'gcr.io/cloud-builders/docker'
   args: ['push', 'asia-south1-docker.pkg.dev/$PROJECT_ID/caddy-repo/caddy-app:latest']
 
-# Upload result
+# ☁️ Upload scan result
 - name: 'gcr.io/cloud-builders/gsutil'
   args: ['cp', 'result-$BUILD_ID.txt', 'gs://darp-grype-bucket-123/']
 
